@@ -23,10 +23,12 @@ typedef struct{
 typedef struct{
     char *name;
     int id;
-    struct list* grades_list;
+    list* grades_list;
     float average;
     int number_courses;
 } Student;
+
+/**                 Grade user-functions */
 
 /**
  * @brief Creates a new Grade structure
@@ -55,8 +57,11 @@ Grade grade_create(char *course_names, int course_grades) {
 
 
 /**
-*@brief
-*/
+ * @brief Creates a copy of Grade structure
+ * @param imput a pointer to the grade to clone
+ * @param output a pointer to a pointer of the cloned grade
+ * @return Pointer to the newly created Grade structure, or NULL if creation failed
+ */
 int grade_clone(elem_t input, elem_t *output) {
     if(!input || !output)    {
         output = null;
@@ -73,13 +78,47 @@ int grade_clone(elem_t input, elem_t *output) {
     return Success;
 }
 
+/**
+ * @brief destroyes grade structure
+ * @param input a void* pointer to the grade to destroy
+ * @return None
+ */
 void grade_destroy(elem_t grade) {
     Grade *g = (Grade) grade;
     free(g->course_name);
     free(g);
 }
 
+/**
+ * @brief Creates a copy of list of grade structure, copeis each element while
+ * @brief iterates it.
+ * @param dest a pointer to the list of grades we want to copy to
+ * @param src a pointer to the list of grades we want to copy from
+ * @return None
+ */
+void duplicate_gradeslist( list *dest, list *src) {
+    iterator current_src = list_begin(src);
+    elem_t current_dest = NULL;
 
+    while(current_src) {
+        if(grade_clone(current_src, &current_dest) == Failure) {
+            return;
+        }
+        if(!current_dest) {
+            return;
+        }
+        if(list_push_back(dest, current_dest)) {
+            //if push is failed then manage memory
+            grade_destroy(current_dest);
+            return;
+        }
+
+        current_src = list_next(current_src);
+    }
+}
+
+
+/** Student user-functions       */
 
 Student student_create(int id, char *name, list *grades) {
     if(!name || !grades) {
@@ -98,26 +137,6 @@ Student student_create(int id, char *name, list *grades) {
     s->grades_list = grades;
 }
 
-void duplicate_gradeslist( list *dest, list *src) {
-    iterator current_src = list_begin(src);
-    elem_t current_dest = NULL;
-
-    while(current_src) {
-        if(grade_clone(current_src, &current_dest) == Failure) {
-            return;
-        }
-        if(!current_dest) {
-            return;
-        }
-        if(list_push_back(dest, current_dest)) {
-        //if push is failed then manage memory
-            grade_destroy(current_dest);
-            return;
-        }
-
-        current_src = list_next(current_src);
-    }
-}
 
 int student_clone(elem_t student_in, elem_t *student_out) {
     if(!input || !output) {
@@ -141,4 +160,41 @@ void student_destroy(elem_t student) {
     list_destroy(s->grades_list);
     free(s->name);
     free(s);
+}
+
+/**         student - end    */
+
+typedef struct grades {
+    list *students_list;
+} grades;
+
+/**
+ * @brief Initializes the "grades" data-structure.
+ * @returns A pointer to the data-structure, of NULL in case of an error
+ */
+struct grades* grades_init() {
+    grades *new_grades = (grades)malloc(sizeof(grades));
+    if(!new_grades) {
+        return NULL;
+    }
+    new_grades->students_list = list_init(student_clone, student_destroy);
+    return new_grades;
+}
+
+/**
+ * @brief Destroys "grades", de-allocate all memory!
+ */
+void grades_destroy(struct grades *grades) {
+    list_destroy(grades->students_list);
+    free(grades);
+}
+
+/**
+ * @brief Adds a student with "name" and "id" to "grades"
+ * @returns 0 on success
+ * @note Failes if "grades" is invalid, or a student with
+ * the same "id" already exists in "grades"
+ */
+int grades_add_student(struct grades *grades, const char *name, int id) {
+    
 }
