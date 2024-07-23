@@ -120,7 +120,7 @@ void duplicate_gradeslist( list *dest, list *src) {
 
 /** Student user-functions       */
 
-Student student_create(int id, char *name, list *grades) {
+Student student_create(int id, char *name) {
     if(!name || !grades) {
         return Null;
     }
@@ -134,7 +134,7 @@ Student student_create(int id, char *name, list *grades) {
     }
     strcpy(s->name, name);
     s->id = id;
-    s->grades_list = grades;
+    s->grades_list = list_init(grades_clone, grades_destroy);
 }
 
 
@@ -196,5 +196,7 @@ void grades_destroy(struct grades *grades) {
  * the same "id" already exists in "grades"
  */
 int grades_add_student(struct grades *grades, const char *name, int id) {
+    Student *new_student = create_student(name, id);
+
 
 }
