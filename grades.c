@@ -196,5 +196,5 @@ void grades_destroy(struct grades *grades) {
  * the same "id" already exists in "grades"
  */
 int grades_add_student(struct grades *grades, const char *name, int id) {
-    
+
 }
