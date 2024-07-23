@@ -74,7 +74,7 @@ int grade_clone(elem_t input, elem_t *output) {
 }
 
 void grade_destroy(elem_t grade) {
-    grade *g = (Grade) grade;
+    Grade *g = (Grade) grade;
     free(g->course_name);
     free(g);
 }
@@ -98,19 +98,47 @@ Student student_create(int id, char *name, list *grades) {
     s->grades_list = grades;
 }
 
+void duplicate_gradeslist( list *dest, list *src) {
+    iterator current_src = list_begin(src);
+    elem_t current_dest = NULL;
+
+    while(current_src) {
+        if(grade_clone(current_src, &current_dest) == Failure) {
+            return;
+        }
+        if(!current_dest) {
+            return;
+        }
+        if(list_push_back(dest, current_dest)) {
+        //if push is failed then manage memory
+            grade_destroy(current_dest);
+            return;
+        }
+
+        current_src = list_next(current_src);
+    }
+}
+
 int student_clone(elem_t student_in, elem_t *student_out) {
     if(!input || !output) {
         return Failure;
     }
     Student *in = (Student) student_in;
     Student *out;
-    out->grades_list =
-    out = Student_create(input->course_name,input->course_grade);
+    list *grades_list = list_init(grade_clone, grade_destroy);
+    out = Student_create(in->id ,in->name, grades_list);
     if(!out) {
         output = null;
         return Failure;
     }
+    duplicate_gradeslist(out->grades_list ,in->grades_list);
     *output = out;
     return Success;
 }
 
+void student_destroy(elem_t student) {
+    Student *s = (Student)student;
+    list_destroy(s->grades_list);
+    free(s->name);
+    free(s);
+}
