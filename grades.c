@@ -190,13 +190,41 @@ void grades_destroy(struct grades *grades) {
 }
 
 /**
+ * @brief go through the student list and look for an ID
+ */
+ elem_t student_search (elem_t student, int id) {
+    if (!student) {
+        return NULL;
+    }
+    iterator student_current = list_begin(student);
+    while (!student_current) {
+        student_current p_student_current = list_get(student_current);
+        if (student_current->id == id) {
+            return p_student_current;
+        }
+        student_current = list_next(student_current);
+    }
+    return NULL;
+ }
+
+/**
  * @brief Adds a student with "name" and "id" to "grades"
  * @returns 0 on success
  * @note Failes if "grades" is invalid, or a student with
  * the same "id" already exists in "grades"
  */
 int grades_add_student(struct grades *grades, const char *name, int id) {
-    Student *new_student = create_student(name, id);
-
-
+    if (!grades) {
+        return Failure;
+    }   
+    if (student_search(grades, id)) {
+        return Failes;
+    }
+    Student *new_student = create_student(name, id);  /*student_create ??*/
+    if (!list_push_front(grades, new_student)) {
+        student_destroy (new_student);
+        return Failes;
+    }
+    student_destroy (new_student);
+    return Success;
 }
