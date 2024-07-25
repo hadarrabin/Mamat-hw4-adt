@@ -40,7 +40,7 @@ Grade* grade_create(char *course_names, int course_grades) {
     if(course_grades < 0 || course_grades > 100) {
         return NULL;
     }
-    Grade *new_grade = (Grade)malloc(sizeof(Grade));
+    Grade *new_grade = (Grade*)malloc(sizeof(Grade));
     if(!new_grade) {
         return NULL;
     }
@@ -67,7 +67,7 @@ int grade_clone(elem_t input, elem_t *output) {
         output = NULL;
         return Failure;
     }
-    Grade *g = (Grade) input;
+    Grade *g = (Grade*) input;
     Grade *out;
     out = grade_create(g->course_name,g->course_grade);
     if(!out) {
@@ -84,7 +84,7 @@ int grade_clone(elem_t input, elem_t *output) {
  * @return None
  */
 void grade_destroy(elem_t grade) {
-    Grade *g = (Grade) grade;
+    Grade *g = (Grade*) grade;
     free(g->course_name);
     free(g);
 }
@@ -124,9 +124,9 @@ Student* student_create(int id, char *name) {
     if(!name || !grades) {
         return NULL;
     }
-    Student *s = (Student)malloc(sizeof(Student));
+    Student *s = (Student*)malloc(sizeof(Student));
     if(!s) {
-        return Null;
+        return NULL;
     }
     s->name = malloc(sizeof(char)*(strlen(name)+1));
     if(!s->name) {
@@ -145,21 +145,20 @@ int student_clone(elem_t student_in, elem_t *student_out) {
     if(!student_in || !student_out) {
         return Failure;
     }
-    Student *in = (Student) student_in;
+    Student *in = (Student*) student_in;
     Student *out;
-    //list *grades_list = list_init(grade_clone, grade_destroy);
     out = student_create(in->id ,in->name);
     if(!out) {
-        output = NULL;
+        student_out = NULL;
         return Failure;
     }
     duplicate_gradeslist(out->grades_list ,in->grades_list);
-    *output = out;
+    *student_out = out;
     return Success;
 }
 
 void student_destroy(elem_t student) {
-    Student *s = (Student)student;
+    Student *s = (Student*)student;
     list_destroy(s->grades_list);
     free(s->name);
     free(s);
@@ -176,7 +175,7 @@ typedef struct grades {
  * @returns A pointer to the data-structure, of NULL in case of an error
  */
 struct grades* grades_init() {
-    grades *new_grades = (grades)malloc(sizeof(grades));
+    grades *new_grades = (grades*)malloc(sizeof(grades));
     if(!new_grades) {
         return NULL;
     }
