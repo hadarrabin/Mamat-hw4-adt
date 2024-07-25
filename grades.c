@@ -36,22 +36,22 @@ typedef struct{
  * @param course_grade The grade for the course (0-100)
  * @return Pointer to the newly created Grade structure, or NULL if creation failed
  */
-Grade* grade_create(char *course_names, int course_grades) {
-    if(course_grades < 0 || course_grades > 100) {
+Grade* grade_create(char *course_name, int course_grade) {
+    if(course_grade < 0 || course_grade > 100) {
         return NULL;
     }
     Grade *new_grade = (Grade*)malloc(sizeof(Grade));
     if(!new_grade) {
         return NULL;
     }
-    new_grade->course_name = malloc(sizeof(char)*(strlen(course_names)+1));
+    new_grade->course_name = malloc(sizeof(char)*(strlen(course_name)+1));
     if(!new_grade->course_name) {
         free(new_grade);
         return NULL;
     }
-    strcpy(new_grade->course_name, course_names);
+    strcpy(new_grade->course_name, course_name);
 
-    new_grade->course_grade = course_grades;
+    new_grade->course_grade = course_grade;
     return new_grade;
 }
 
@@ -64,12 +64,12 @@ Grade* grade_create(char *course_names, int course_grades) {
  */
 int grade_clone(elem_t input, elem_t *output) {
     if(!input || !output)    {
-        output = NULL;
+        *output = NULL;
         return Failure;
     }
     Grade *g = (Grade*) input;
-    Grade *out;
-    out = grade_create(g->course_name,g->course_grade);
+    Grade *out = grade_create(g->course_name,g->course_grade);
+    
     if(!out) {
         *output = NULL;
         return Failure;
@@ -149,7 +149,7 @@ int student_clone(elem_t student_in, elem_t *student_out) {
     Student *in = (Student*) student_in;
     Student *out = student_create(in->id ,in->name);
     if(!out) {
-        student_out = NULL;
+        *student_out = NULL;
         return Failure;
     }
     duplicate_gradeslist(out->grades_list, in->grades_list);
@@ -306,7 +306,7 @@ float grades_calc_avg(struct grades *grades, int id, char **out) {
         return -1;
     }
     *out = strdup(s->name);
-    if(!*out) {
+    if(!(*out)) {
         return -1;
     }
     return s->average;
@@ -330,10 +330,10 @@ int grades_print_student(struct grades *grades, int id) {
         return Failure;
     }
     printf("%s %d: ", s->name, s->id);
-    list *grades_list = s->grades_list;
-    iterator grade_last = list_end(grades_list);
-    iterator grade_current = list_begin(grades_list);
-    while (!grade_current && grade_current != grade_last) {
+    list *grades_l = s->grades_list;
+    iterator grade_last = list_end(grades_l);
+    iterator grade_current = list_begin(grades_l);
+    while (grade_current && (grade_current != grade_last)) {
         Grade *p_grade_current = (Grade*)list_get(grade_current);
         if (!p_grade_current) {
             return Failure;
