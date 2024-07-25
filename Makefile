@@ -1,23 +1,26 @@
-#compile grades.c to grades.o
-CC= gcc
-CCFLAGS= -g -Wall -std=c99
-CCLINK=$(CC)
+# Compiler and flags
+CC = gcc
+CFLAGS = -g -Wall -std=c99 -fpic
+LDFLAGS = -shared
 
-#object and libary linkage
-OBJS= grades.o
-SO= libgrades.so
+# Object files and library name
+OBJS = grades.o
+LIB = libgrades.so
 
-#delete the files created throughout compiling
-RM= rm -rf grades.o libgrades.so
+# Phony targets
+.PHONY: all clean
 
-#shared objects libaries
-$(SO): $(OBJS)
-	$(CCLINK) $(CCFLAGS) -shared $(OBJS) -o $(SO) -llinked-list -L.
+# Default target
+all: $(LIB)
 
-#compiling grades
-grades.o: grades.c grades.h linked-list.h
-	$(CC) $(CCFLAGS) -c -fpic grades.c
+# Shared library
+$(LIB): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $^ -llinked-list -L.
 
-#delete files
+# Object files
+%.o: %.c grades.h linked-list.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean up
 clean:
-	$(RM)
+	$(RM) $(OBJS) $(LIB)
