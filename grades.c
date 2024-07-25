@@ -63,7 +63,9 @@ Grade* grade_create(char *course_name, int course_grade) {
  */
 int grade_clone(elem_t input, elem_t *output) {
     if(!input || !output)    {
-        *output = NULL;
+        if (output) {
+            *output = NULL;
+        }
         return Failure;
     }
     Grade *g = (Grade*) input;
@@ -96,6 +98,9 @@ void grade_destroy(elem_t grade) {
  * @return None
  */
 void duplicate_gradeslist( list *dest, list *src) {
+    if (!dest || !src) {
+        return;
+    }
     iter current_src = list_begin(src);
     elem_t current_dest = NULL;
 
@@ -302,6 +307,9 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
  */
 float grades_calc_avg(struct grades *grades, int id, char **out) {
     if(!grades || !out) {
+        if (out) {
+            *out = NULL;
+        }
         return -1;
     }
     Student *s = student_search(grades->students_list, id);
@@ -336,20 +344,25 @@ int grades_print_student(struct grades *grades, int id) {
     }
     printf("%s %d: ", s->name, s->id);
     list *grades_l = s->grades_list;
-    iter grade_last = list_end(grades_l);
+    if (list_size(grades_l) == 0) {
+        printf("\n");
+        return Success;
+    }
     iter grade_current = list_begin(grades_l);
-    Grade *p_grade_current = (Grade*)list_get(grade_current);
-    while (grade_current && (grade_current != grade_last)) {
-        p_grade_current = (Grade*)list_get(grade_current);
+    while (grade_current) {
+        Grade *p_grade_current = (Grade*)list_get(grade_current);
         if (!p_grade_current) {
             return Failure;
         }
-        printf("%s %d, ",p_grade_current->course_name,
+        printf("%s %d",p_grade_current->course_name,
 		p_grade_current->course_grade);
+        if (list_next(grade_current)) {
+            printf (", ");
+        } else {
+            printf("\n");
+        }
         grade_current = list_next(grade_current);
     }
-    p_grade_current = (Grade *)list_get(grade_last);
-    printf("%s %d\n", p_grade_current->course_name, p_grade_current->course_grade);
     return Success;
 }
 
