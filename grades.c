@@ -228,3 +228,44 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
     student_destroy (new_student);
     return Success;
 }
+
+/**
+ * @brief go through the student's courses list and look for a name
+ */
+ Student course_search (elem_t student, int id, const char *name) {
+    if (!student) {
+        return NULL;
+    }
+    iterator student_current = list_begin(student);
+    while (!student_current) {
+        student_current p_student_current = list_get(student_current);
+        if (student_current->id == id) {
+            return p_student_current;
+        }
+        student_current = list_next(student_current);
+    }
+    return NULL;
+ }
+
+/**
+ * @brief Adds a course with "name" and "grade" to the student with "id"
+ * @return 0 on success
+ * @note Failes if "grades" is invalid, if a student with "id" does not exist
+ * in "grades", if the student already has a course with "name", or if "grade"
+ * is not between 0 to 100.
+ */
+ int grades_add_grade(struct grades *grades,
+                     const char *name,
+                     int id,
+                     int grade) {
+                        if (!grades) {
+                            return Failure;
+                        }
+                        if (!student_search(grades, id)) {
+                            return Failure;
+                        }
+                        if(grade < 0 || grade > 100) {
+                            return Failure;
+                        }
+                        if
+                     }
