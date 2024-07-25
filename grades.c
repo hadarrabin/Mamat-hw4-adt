@@ -36,7 +36,7 @@ typedef struct{
  * @param course_grade The grade for the course (0-100)
  * @return Pointer to the newly created Grade structure, or NULL if creation failed
  */
-Grade grade_create(char *course_names, int course_grades) {
+Grade* grade_create(char *course_names, int course_grades) {
     if(course_grades < 0 || course_grades > 100) {
         return Null;
     }
@@ -120,7 +120,7 @@ void duplicate_gradeslist( list *dest, list *src) {
 
 /** Student user-functions       */
 
-Student student_create(int id, char *name) {
+Student* student_create(int id, char *name) {
     if(!name || !grades) {
         return Null;
     }
@@ -134,7 +134,10 @@ Student student_create(int id, char *name) {
     }
     strcpy(s->name, name);
     s->id = id;
+    s->average = 0;
+    s->number_courses = 0;
     s->grades_list = list_init(grades_clone, grades_destroy);
+    return s;
 }
 
 
@@ -145,7 +148,7 @@ int student_clone(elem_t student_in, elem_t *student_out) {
     Student *in = (Student) student_in;
     Student *out;
     list *grades_list = list_init(grade_clone, grade_destroy);
-    out = Student_create(in->id ,in->name, grades_list);
+    out = student_create(in->id ,in->name, grades_list);
     if(!out) {
         output = null;
         return Failure;
@@ -192,14 +195,14 @@ void grades_destroy(struct grades *grades) {
 /**
  * @brief go through the student list and look for an ID
  */
- elem_t student_search (elem_t student, int id) {
+ Student* student_search (list student, int id) {
     if (!student) {
         return NULL;
     }
     iterator student_current = list_begin(student);
     while (!student_current) {
-        student_current p_student_current = list_get(student_current);
-        if (student_current->id == id) {
+        Student *p_student_current = list_get(student_current);
+        if (p_student_current->id == id) {
             return p_student_current;
         }
         student_current = list_next(student_current);
@@ -218,33 +221,33 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
         return Failure;
     }   
     if (student_search(grades, id)) {
-        return Failes;
+        return Failure;
     }
-    Student *new_student = create_student(name, id);  /*student_create ??*/
-    if (!list_push_front(grades, new_student)) {
-        student_destroy (new_student);
-        return Failes;
+    Student *new_student = student_create(name, id); 
+    if (!list_push_back(grades, (elem_t)new_student)) {
+        //student_destroy (new_student);
+        return Failure;
     }
-    student_destroy (new_student);
+    //student_destroy (new_student);
     return Success;
 }
 
 /**
  * @brief go through the student's courses list and look for a name
  */
- Student course_search (elem_t student, int id, const char *name) {
-    if (!student) {
-        return NULL;
+ int course_search ( list* grades_list, const char *name) {
+    if (!grades_list || !name) {
+        return Failure;
     }
-    iterator student_current = list_begin(student);
-    while (!student_current) {
-        student_current p_student_current = list_get(student_current);
-        if (student_current->id == id) {
-            return p_student_current;
+    iterator grade_current = list_begin(grades_list);
+    while (!grade_current) {
+        Grade *p_grade_current = list_get(grade_current);
+        if (!strcmp(grade_current->name, name)) {
+            return Success;
         }
-        student_current = list_next(student_current);
+        grade_current = list_next(grade_current);
     }
-    return NULL;
+    return Failure;
  }
 
 /**
@@ -261,11 +264,109 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
                         if (!grades) {
                             return Failure;
                         }
-                        if (!student_search(grades, id)) {
+                        else if(grade < 0 || grade > 100) {
                             return Failure;
                         }
-                        if(grade < 0 || grade > 100) {
+                        Student *s = student_search(grades, id);
+                        else if (!s) {
                             return Failure;
                         }
-                        if
+                        else if (!course_search(s->grades_list, name)) {
+                            return Failure;
+                        }
+                        else {
+                            Grade *g = grade_create(name,grade);
+                            if(list_push_back(s->grades_list, (elem_t)g)) {
+                                return Failure;
+                            }
+                            s->average = ((s->number_courses) * (s->average) +
+                             grade)/ (s->number_courses +1);
+                            s->number_courses = s->number_courses + 1;
+                            return Success;
+                        }
                      }
+
+/**
+ * @brief Calcs the average of the student with "id" in "grades".
+ * @param[out] out This method sets the variable pointed by "out" to the
+ * student's name. Needs to allocate memory. The user is responsible for
+ * freeing the memory.
+ * @returns The average, or -1 on error
+ * @note Fails if "grades" is invalid, or if a student with "id" does not exist
+ * in "grades".
+ * @note If the student has no courses, the average is 0.
+ * @note On error, sets "out" to NULL.
+ */
+float grades_calc_avg(struct grades *grades, int id, char **out) {
+    if(!grades || !out) {
+        return -1;
+    }
+    Student *s = student_search(grades->students_list, id);
+    if(!s) {
+        return -1;
+    }
+    *out = strdup(s->name);
+    if(!*out) {
+        return -1;
+    }
+    return s->average;
+}
+
+/**
+ * @brief Prints the courses of the student with "id" in the following format:
+ * STUDENT-NAME STUDENT-ID: COURSE-1-NAME COURSE-1-GRADE, [...]
+ * @returns 0 on success
+ * @note Fails if "grades" is invalid, or if a student with "id" does not exist
+ * in "grades".
+ * @note The courses should be printed according to the order 
+ * in which they were inserted into "grades"
+ */
+int grades_print_student(struct grades *grades, int id) {
+    if(!grades) {
+        return Failure;
+    }
+    Student *s = student_search(grades, id);
+    if(!s) {
+        return Failure;
+    }
+    printf("%s %d: ", s->name, s->id);
+    list *grades_list = s->grades_list;
+    iterator grade_last = list_end(grades_list);
+    iterator grade_current = list_begin(grades_list);
+    while (!grade_current && grade_current != grade_last) {
+        Grade *p_grade_current = list_get(grade_current);
+        if (!p_grade_current) {
+            return Failure;
+        }
+        printf("%s %d, ",p_grade_current->name, p_grade_current->grade);
+        grade_current = list_next(grade_current);
+    }
+    p_grade_current = list_get(grade_last);
+    printf("%s %d\n", p_grade_current->name, p_grade_current->grade);
+    return Success;
+}
+
+/**
+ * @brief Prints all students in "grade", in the following format:
+ * STUDENT-1-NAME STUDENT-1-ID: COURSE-1-NAME COURSE-1-GRADE, [...]
+ * STUDENT-2-NAME STUDENT-2-ID: COURSE-1-NAME COURSE-1-GRADE, [...]
+ * @returns 0 on success
+ * @note Fails if "grades" is invalid
+ * @note The students should be printed according to the order 
+ * in which they were inserted into "grades"
+ * @note The courses should be printed according to the order 
+ * in which they were inserted into "grades"
+ */
+int grades_print_all(struct grades *grades) {
+    if(!grades) {
+        return Failure;
+    }
+    size_t students_num = list_size(grades);
+    iterator student_current = list_begin(grades);
+    for(int i=0; i<(int)students_num; i++) {
+        Student *s = list_get(student_current);
+        grades_print_student(grades, s->id);
+        student_current = list_next(student_current);
+    }
+}
+
