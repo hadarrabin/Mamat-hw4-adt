@@ -71,7 +71,7 @@ int grade_clone(elem_t input, elem_t *output) {
     Grade *out;
     out = grade_create(g->course_name,g->course_grade);
     if(!out) {
-        output = NULL;
+        *output = NULL;
         return Failure;
     }
     *output = out;
@@ -101,7 +101,7 @@ void duplicate_gradeslist( list *dest, list *src) {
     elem_t current_dest = NULL;
 
     while(current_src) {
-        if(grade_clone(current_src, &current_dest) == Failure) {
+        if(grade_clone(list_get(current_src), &current_dest) == Failure) {
             return;
         }
         if(!current_dest) {
@@ -121,7 +121,7 @@ void duplicate_gradeslist( list *dest, list *src) {
 /** Student user-functions       */
 
 Student* student_create(int id, char *name) {
-    if(!name || !grades) {
+    if(!name ) {
         return NULL;
     }
     Student *s = (Student*)malloc(sizeof(Student));
@@ -130,6 +130,7 @@ Student* student_create(int id, char *name) {
     }
     s->name = malloc(sizeof(char)*(strlen(name)+1));
     if(!s->name) {
+		free(s);
         return NULL;
     }
     strcpy(s->name, name);
@@ -146,13 +147,12 @@ int student_clone(elem_t student_in, elem_t *student_out) {
         return Failure;
     }
     Student *in = (Student*) student_in;
-    Student *out;
-    out = student_create(in->id ,in->name);
+    Student *out = student_create(in->id ,in->name);
     if(!out) {
         student_out = NULL;
         return Failure;
     }
-    duplicate_gradeslist(out->grades_list ,in->grades_list);
+    duplicate_gradeslist(out->grades_list, in->grades_list);
     *student_out = out;
     return Success;
 }
@@ -194,13 +194,13 @@ void grades_destroy(struct grades *grades) {
 /**
  * @brief go through the student list and look for an ID
  */
- Student* student_search (list student, int id) {
-    if (!student) {
+ Student* student_search (list *students, int id) {
+    if (!students) {
         return NULL;
     }
-    iterator student_current = list_begin(student);
-    while (!student_current) {
-        Student *p_student_current = list_get(student_current);
+    iterator student_current = list_begin(students);
+    while (student_current) {
+        Student *p_student_current = (Student*)list_get(student_current);
         if (p_student_current->id == id) {
             return p_student_current;
         }
@@ -219,15 +219,17 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
     if (!grades) {
         return Failure;
     }   
-    if (student_search(grades, id)) {
+    if (student_search(grades->students_list, id)) {
         return Failure;
     }
-    Student *new_student = student_create(name, id); 
-    if (!list_push_back(grades, (elem_t)new_student)) {
-        //student_destroy (new_student);
+    Student *new_student = student_create(id, (char *)name);
+	if(!new_student) {
+		return Failure;
+	}
+    if (list_push_back(grades->students_list, (elem_t)new_student)) {
+        student_destroy(new_student);
         return Failure;
     }
-    //student_destroy (new_student);
     return Success;
 }
 
@@ -240,8 +242,8 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
     }
     iterator grade_current = list_begin(grades_list);
     while (!grade_current) {
-        Grade *p_grade_current = list_get(grade_current);
-        if (!strcmp(grade_current->name, name)) {
+        Grade *p_grade_current = (Grade*)list_get(grade_current);
+        if (strcmp(p_grade_current->course_name, name) == Success) {
             return Success;
         }
         grade_current = list_next(grade_current);
@@ -260,27 +262,25 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
                      const char *name,
                      int id,
                      int grade) {
-                        if (!grades) {
+                        if (!grades ||grade < 0 ||grade > 100) {
                             return Failure;
                         }
-                        else if(grade < 0 || grade > 100) {
-                            return Failure;
-                        }
-                        Student *s = student_search(grades, id);
+                        Student *s = student_search(grades->students_list, id);
                         else if (!s) {
                             return Failure;
                         }
-                        else if (!course_search(s->grades_list, name)) {
+                        else if (course_search(s->grades_list, name) == Success) {
                             return Failure;
                         }
                         else {
-                            Grade *g = grade_create(name,grade);
-                            if(list_push_back(s->grades_list, (elem_t)g)) {
-                                return Failure;
+                            Grade *g = grade_create((char *)name, grade);
+                            if(!g || list_push_back(s->grades_list, (elem_t)g)) {
+                                grade_destroy(g);
+								return Failure;
                             }
                             s->average = ((s->number_courses) * (s->average) +
                              grade)/ (s->number_courses +1);
-                            s->number_courses = s->number_courses + 1;
+                            s->number_courses += 1;
                             return Success;
                         }
                      }
@@ -302,6 +302,7 @@ float grades_calc_avg(struct grades *grades, int id, char **out) {
     }
     Student *s = student_search(grades->students_list, id);
     if(!s) {
+		*out = NULL;
         return -1;
     }
     *out = strdup(s->name);
@@ -324,7 +325,7 @@ int grades_print_student(struct grades *grades, int id) {
     if(!grades) {
         return Failure;
     }
-    Student *s = student_search(grades, id);
+    Student *s = student_search(grades->students_list, id);
     if(!s) {
         return Failure;
     }
@@ -333,15 +334,16 @@ int grades_print_student(struct grades *grades, int id) {
     iterator grade_last = list_end(grades_list);
     iterator grade_current = list_begin(grades_list);
     while (!grade_current && grade_current != grade_last) {
-        Grade *p_grade_current = list_get(grade_current);
+        Grade *p_grade_current = (Grade*)list_get(grade_current);
         if (!p_grade_current) {
             return Failure;
         }
-        printf("%s %d, ",p_grade_current->name, p_grade_current->grade);
+        printf("%s %d, ",p_grade_current->course_name,
+		p_grade_current->course_grade);
         grade_current = list_next(grade_current);
     }
-    p_grade_current = list_get(grade_last);
-    printf("%s %d\n", p_grade_current->name, p_grade_current->grade);
+    p_grade_current = (Grade *)list_get(grade_last);
+    printf("%s %d\n", p_grade_current->course_name, p_grade_current->course_grade);
     return Success;
 }
 
@@ -360,12 +362,13 @@ int grades_print_all(struct grades *grades) {
     if(!grades) {
         return Failure;
     }
-    size_t students_num = list_size(grades);
-    iterator student_current = list_begin(grades);
-    for(int i=0; i<(int)students_num; i++) {
-        Student *s = list_get(student_current);
+    size_t students_num = list_size(grades->students_list);
+    iterator student_current = list_begin(grades->students_list);
+    for(size_t i=0; i<students_num; i++) {
+        Student *s = (Student *)list_get(student_current);
         grades_print_student(grades, s->id);
         student_current = list_next(student_current);
     }
+	return Success;
 }
 
