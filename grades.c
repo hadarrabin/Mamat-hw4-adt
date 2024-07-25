@@ -38,16 +38,16 @@ typedef struct{
  */
 Grade* grade_create(char *course_names, int course_grades) {
     if(course_grades < 0 || course_grades > 100) {
-        return Null;
+        return NULL;
     }
     Grade *new_grade = (Grade)malloc(sizeof(Grade));
     if(!new_grade) {
-        return Null;
+        return NULL;
     }
-    new_grade->course_name = malloc(sizeof(char)(strlen(course_names)+1));
+    new_grade->course_name = malloc(sizeof(char)*(strlen(course_names)+1));
     if(!new_grade->course_name) {
         free(new_grade);
-        return Null;
+        return NULL;
     }
     strcpy(new_grade->course_name, course_names);
 
@@ -64,14 +64,14 @@ Grade* grade_create(char *course_names, int course_grades) {
  */
 int grade_clone(elem_t input, elem_t *output) {
     if(!input || !output)    {
-        output = null;
+        output = NULL;
         return Failure;
     }
     Grade *g = (Grade) input;
     Grade *out;
-    out = grade_create(input->course_name,input->course_grade);
+    out = grade_create(g->course_name,g->course_grade);
     if(!out) {
-        output = null;
+        output = NULL;
         return Failure;
     }
     *output = out;
@@ -122,7 +122,7 @@ void duplicate_gradeslist( list *dest, list *src) {
 
 Student* student_create(int id, char *name) {
     if(!name || !grades) {
-        return Null;
+        return NULL;
     }
     Student *s = (Student)malloc(sizeof(Student));
     if(!s) {
@@ -130,27 +130,27 @@ Student* student_create(int id, char *name) {
     }
     s->name = malloc(sizeof(char)*(strlen(name)+1));
     if(!s->name) {
-        return Null;
+        return NULL;
     }
     strcpy(s->name, name);
     s->id = id;
     s->average = 0;
     s->number_courses = 0;
-    s->grades_list = list_init(grades_clone, grades_destroy);
+    s->grades_list = list_init(grade_clone, grade_destroy);
     return s;
 }
 
 
 int student_clone(elem_t student_in, elem_t *student_out) {
-    if(!input || !output) {
+    if(!student_in || !student_out) {
         return Failure;
     }
     Student *in = (Student) student_in;
     Student *out;
-    list *grades_list = list_init(grade_clone, grade_destroy);
-    out = student_create(in->id ,in->name, grades_list);
+    //list *grades_list = list_init(grade_clone, grade_destroy);
+    out = student_create(in->id ,in->name);
     if(!out) {
-        output = null;
+        output = NULL;
         return Failure;
     }
     duplicate_gradeslist(out->grades_list ,in->grades_list);
