@@ -208,7 +208,7 @@ void grades_destroy(struct grades *grades) {
         return NULL;
     }
     iter student_current = list_begin(students);
-    while (student_current) {
+    while (student_current != NULL) {
         Student *p_student_current = (Student*)list_get(student_current);
         if (p_student_current->id == id) {
             return p_student_current;
@@ -250,7 +250,7 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
         return Failure;
     }
     iter grade_current = list_begin(grades_list);
-    while (!grade_current) {
+    while (grade_current) {
         Grade *p_grade_current = (Grade*)list_get(grade_current);
         if (strcmp(p_grade_current->course_name, name) == Success) {
             return Success;
@@ -271,7 +271,7 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
                      const char *name,
                      int id,
                      int grade) {
-                        if (!grades ||grade < 0 ||grade > 100) {
+                        if (!grades || grade < 0 || grade > 100) {
                             return Failure;
                         }
                         Student *s = student_search(grades->students_list, id);
@@ -385,7 +385,7 @@ int grades_print_all(struct grades *grades) {
     iter student_current = list_begin(grades->students_list);
     for(size_t i=0; i<students_num; i++) {
         Student *s = (Student *)list_get(student_current);
-        grades_print_student(grades, s->id);
+        grades_print_student(grades,  s->id);
         student_current = list_next(student_current);
     }
 	return Success;
