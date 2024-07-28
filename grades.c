@@ -86,6 +86,9 @@ int grade_clone(elem_t input, elem_t *output) {
  */
 void grade_destroy(elem_t grade) {
     Grade *g = (Grade*) grade;
+    if(!g) {
+        return;
+    }
     free(g->course_name);
     free(g);
 }
@@ -125,16 +128,13 @@ void duplicate_gradeslist( list *dest, list *src) {
 /** Student user-functions       */
 
 Student* student_create(int id, char *name) {
-    if(!name ) {
-        return NULL;
-    }
     Student *s = (Student*)malloc(sizeof(Student));
-    if(!s) {
+    if(!name || !s ) {
         return NULL;
     }
     s->name = malloc(sizeof(char)*strlen(name)+1);
     if(!s->name) {
-		free(s);
+        free(s);
         return NULL;
     }
     strcpy(s->name,name);
@@ -150,7 +150,6 @@ Student* student_create(int id, char *name) {
     return s;
 }
 
-
 int student_clone(elem_t student_in, elem_t *student_out) {
     if(!student_in || !student_out) {
         return Failure;
@@ -158,7 +157,6 @@ int student_clone(elem_t student_in, elem_t *student_out) {
     Student *in = (Student*) student_in;
     Student *out = student_create(in->id ,in->name);
     if(!out) {
-        *student_out = NULL;
         return Failure;
     }
     duplicate_gradeslist(out->grades_list, in->grades_list);
@@ -167,10 +165,12 @@ int student_clone(elem_t student_in, elem_t *student_out) {
 }
 
 void student_destroy(elem_t student) {
-    Student *s = (Student*)student;
-    list_destroy(s->grades_list);
-    free(s->name);
-    free(s);
+    if(student) {
+        Student *s = (Student*)student;
+        free(s->name);
+        list_destroy(s->grades_list);
+        free(s);
+    }
 }
 
 /**         student - end    */
@@ -196,8 +196,10 @@ struct grades* grades_init() {
  * @brief Destroys "grades", de-allocate all memory!
  */
 void grades_destroy(struct grades *grades) {
-    list_destroy(grades->students_list);
-    free(grades);
+    if(grades) {
+        list_destroy(grades->students_list);
+        free(grades);
+    }
 }
 
 /**
