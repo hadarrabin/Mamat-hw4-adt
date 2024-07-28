@@ -342,7 +342,7 @@ int grades_print_student(struct grades *grades, int id) {
     if(!s) {
         return Failure;
     }
-    printf("%s %d: ", s->name, s->id);
+    printf("%s %d:", s->name, s->id);
     list *grades_l = s->grades_list;
     if (list_size(grades_l) == 0) {
         printf("\n");
@@ -354,10 +354,10 @@ int grades_print_student(struct grades *grades, int id) {
         if (!p_grade_current) {
             return Failure;
         }
-        printf("%s %d",p_grade_current->course_name,
+        printf(" %s %d",p_grade_current->course_name,
 		p_grade_current->course_grade);
         if (list_next(grade_current)) {
-            printf (", ");
+            printf (",");
         } else {
             printf("\n");
         }

@@ -6,7 +6,7 @@ LDFLAGS = -shared
 # Object files and library name
 OBJS = grades.o
 LIB = libgrades.so
-
+export LD_LIBRARY_PATH=./
 # Phony targets
 .PHONY: all clean
 
