@@ -37,7 +37,7 @@ typedef struct{
  * @return Pointer to the newly created Grade structure, or NULL if creation failed
  */
 Grade* grade_create(char *course_name, int course_grade) {
-    if(course_grade < 0 || course_grade > 100) {
+    if(course_grade < 0 || course_grade > 100 || !course_name) {
         return NULL;
     }
     Grade *new_grade = (Grade*)malloc(sizeof(Grade));
@@ -128,8 +128,11 @@ void duplicate_gradeslist( list *dest, list *src) {
 /** Student user-functions       */
 
 Student* student_create(int id, char *name) {
+    if(!name) {
+        return NULL;
+    }
     Student *s = (Student*)malloc(sizeof(Student));
-    if(!name || !s ) {
+    if(!s) {
         return NULL;
     }
     s->name = malloc(sizeof(char)*strlen(name)+1);
@@ -241,6 +244,7 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
         student_destroy(new_student);
         return Failure;
     }
+    student_destroy(new_student);
     return Success;
 }
 
@@ -289,6 +293,7 @@ int grades_add_student(struct grades *grades, const char *name, int id) {
                                 grade_destroy(g);
 								return Failure;
                             }
+                            destroy_grade(g);
                             s->average = ((s->number_courses) * (s->average) +
                              grade)/ (s->number_courses +1);
                             s->number_courses += 1;
